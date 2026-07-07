@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Loket & Full Seating Map</title>
+    <link rel="stylesheet" href="css_TiketNatal">
+</head>
+<body>
+
+    <header>
+        <h1>🎫 Dashboard Loket & Full Seating Map</h1>
+        <div class="status-badge">🟢 Sistem Aktif</div>
+    </header>
+
+    <div class="container">
+        
+        <div class="left-panel">
+            
+            <div class="box">
+                <h2>Input Data Jemaat</h2>
+                <form id="loketForm">
+                    <div class="form-group">
+                        <label>Target Section</label>
+                        <div class="section-selector">
+                            <input type="radio" name="pilihanSection" id="optA" value="A" checked> <label for="optA">Sec A</label>
+                            <input type="radio" name="pilihanSection" id="optB" value="B"> <label for="optB">Sec B</label>
+                            <input type="radio" name="pilihanSection" id="optC" value="C"> <label for="optC">Sec C</label>
+                            <input type="radio" name="pilihanSection" id="optD" value="D"> <label for="optD">Sec D</label>
+                            <input type="radio" name="pilihanSection" id="optE" value="E"> <label for="optE">Sec E</label>
+                            <input type="radio" name="pilihanSection" id="optF" value="F"> <label for="optF">Sec F</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Nama Perwakilan</label>
+                        <input type="text" id="namaJemaat" placeholder="Ketik nama jemaat" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label>ID Tiket Fisik (Sesuai Batas Kursi)</label>
+                        <input type="text" id="idTiket" placeholder="Contoh: A1, A2 atau C15" required autocomplete="off" style="text-transform: uppercase;">
+                    </div>
+                    <button type="submit" class="btn-submit">Catat & Validasi Tiket</button>
+                </form>
+                <div id="alert-box"></div>
+            </div>
+
+            <div class="box log-section">
+                <h2>Riwayat Pendaftaran</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th width="40%">Nama</th>
+                                <th width="45%">Kode Tiket</th>
+                                <th width="15%">Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="right-panel">
+            
+            <div class="quota-widget">
+                <div class="quota-card" id="cardA"><div class="quota-title">Sisa Sec A</div><div class="quota-number" id="sisaA">40</div></div>
+                <div class="quota-card" id="cardB"><div class="quota-title">Sisa Sec B</div><div class="quota-number" id="sisaB">40</div></div>
+                <div class="quota-card" id="cardC"><div class="quota-title">Sisa Sec C</div><div class="quota-number" id="sisaC">30</div></div>
+                <div class="quota-card" id="cardD"><div class="quota-title">Sisa Sec D</div><div class="quota-number" id="sisaD">30</div></div>
+                <div class="quota-card" id="cardE"><div class="quota-title">Sisa Sec E</div><div class="quota-number" id="sisaE">30</div></div>
+                <div class="quota-card" id="cardF"><div class="quota-title">Sisa Sec F</div><div class="quota-number" id="sisaF">30</div></div>
+            </div>
+
+            <div class="denah-section">
+                <h2>Visualisasi Area Seating Lt. 2</h2>
+                <div class="denah-wrapper">
+                    
+                    <div class="blok sec-f"><span class="blok-title">SEC F</span><div class="seat-grid" id="grid-f"></div></div>
+                    <div class="blok tangga tangga-kiri">TANGGA</div>
+                    <div class="toilet-area"><div class="toilet">TOILET<br>PRIA</div><div class="toilet">TOILET<br>WANITA</div></div>
+
+                    <div class="blok sec-a"><span class="blok-title">SECTION A</span><div class="seat-grid" id="grid-a"></div></div>
+                    <div class="blok sec-e"><span class="blok-title">SEC E</span><div class="seat-grid" id="grid-e"></div></div>
+
+                    <div class="blok foh">FOH</div>
+
+                    <div class="blok sec-b"><span class="blok-title">SECTION B</span><div class="seat-grid" id="grid-b"></div></div>
+                    <div class="blok sec-d1"><span class="blok-title">SEC D (1-15)</span><div class="seat-grid" id="grid-d1"></div></div>
+
+                    <div class="blok sec-c"><span class="blok-title">SEC C</span><div class="seat-grid" id="grid-c"></div></div>
+                    <div class="blok tangga tangga-kanan">TANGGA</div>
+                    <div class="blok sec-d2"><span class="blok-title">SEC D (16-30)</span><div class="seat-grid" id="grid-d2"></div></div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // LIMIT PER SECTION
+        const MAX_LIMITS = {
+            'A': 40,
+            'B': 40,
+            'C': 30,
+            'D': 30,
+            'E': 30,
+            'F': 30
+        };
+        
+        let kuota = { ...MAX_LIMITS }; 
+        let tiketTerpakai = []; 
+
+        const form = document.getElementById('loketForm');
+        const inputNama = document.getElementById('namaJemaat');
+        const inputId = document.getElementById('idTiket');
+        const alertBox = document.getElementById('alert-box');
+        const logTable = document.getElementById('logTableBody');
+
+        // KOTAK KURSI
+        function generateInitialSeats() {
+            const sections = [
+                { id: 'grid-a', prefix: 'A', limit: MAX_LIMITS['A'], start: 1 },
+                { id: 'grid-b', prefix: 'B', limit: MAX_LIMITS['B'], start: 1 },
+                { id: 'grid-c', prefix: 'C', limit: MAX_LIMITS['C'], start: 1 },
+                { id: 'grid-e', prefix: 'E', limit: MAX_LIMITS['E'], start: 1 },
+                { id: 'grid-f', prefix: 'F', limit: MAX_LIMITS['F'], start: 1 },
+                { id: 'grid-d1', prefix: 'D', limit: 15, start: 1 },
+                { id: 'grid-d2', prefix: 'D', limit: 15, start: 16 }
+            ];
+
+            sections.forEach(sec => {
+                const container = document.getElementById(sec.id);
+                const end = sec.start + sec.limit - 1;
+                
+                for (let i = sec.start; i <= end; i++) {
+                    const seatDiv = document.createElement('div');
+                    seatDiv.id = `seat-${sec.prefix}${i}`;
+                    seatDiv.className = 'seat kosong';
+                    seatDiv.innerText = `${sec.prefix}${i}`;
+                    container.appendChild(seatDiv);
+                }
+            });
+        }
+        generateInitialSeats();
+
+        // LOGIKA FORM LOKET
+        inputNama.focus();
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const nama = inputNama.value.trim();
+            const rawId = inputId.value.trim().toUpperCase();
+            const sectionTerpilih = document.querySelector('input[name="pilihanSection"]:checked').value;
+            const batasMax = MAX_LIMITS[sectionTerpilih];
+
+            const arrayId = rawId.split(',').map(id => id.trim()).filter(id => id !== '');
+            const jumlahPesan = arrayId.length;
+
+            if (jumlahPesan === 0) return;
+
+            // Validasi Kuota
+            if (jumlahPesan > kuota[sectionTerpilih]) {
+                showAlert(`Gagal! Sisa kuota Section ${sectionTerpilih} hanya ${kuota[sectionTerpilih]}.`, 'error');
+                return;
+            }
+
+            // Validasi Ketat Tiap Kode
+            for (let i = 0; i < arrayId.length; i++) {
+                const kode = arrayId[i];
+                const sectionKode = kode.charAt(0);
+                const nomorKursi = parseInt(kode.substring(1));
+                
+                if (sectionKode !== sectionTerpilih) {
+                    showAlert(`Gagal! Kode "${kode}" salah. Anda sedang memilih input untuk Section ${sectionTerpilih}.`, 'error');
+                    return;
+                }
+                
+                if (isNaN(nomorKursi) || nomorKursi < 1 || nomorKursi > batasMax) {
+                    showAlert(`Gagal! Nomor kursi "${kode}" tidak valid. Maksimal kursi untuk Section ${sectionTerpilih} adalah ${batasMax}.`, 'error');
+                    return;
+                }
+                
+                if (tiketTerpakai.includes(kode)) {
+                    showAlert(`Gagal! Tiket "${kode}" sudah pernah dicatat.`, 'error');
+                    return;
+                }
+            }
+
+            // EKSEKUSI
+            kuota[sectionTerpilih] -= jumlahPesan;
+            updateVisualKuota(sectionTerpilih, kuota[sectionTerpilih]);
+
+            arrayId.forEach(kode => {
+                tiketTerpakai.push(kode);
+                const seatElement = document.getElementById(`seat-${kode}`);
+                if(seatElement) {
+                    seatElement.classList.replace('kosong', 'terisi');
+                }
+            });
+
+            addToLog(nama, arrayId);
+
+            showAlert(`Berhasil mencatat ${jumlahPesan} tiket untuk ${nama}.`, 'success');
+            inputNama.value = '';
+            inputId.value = '';
+            inputNama.focus();
+        });
+
+        // FUNGSI UTILITAS
+        function updateVisualKuota(section, sisa) {
+            const elSisa = document.getElementById(`sisa${section}`);
+            const card = document.getElementById(`card${section}`);
+            elSisa.innerText = sisa;
+            if (sisa === 0) card.classList.add('habis');
+        }
+
+        function showAlert(pesan, tipe) {
+            alertBox.textContent = pesan;
+            alertBox.className = tipe === 'success' ? 'alert-success' : 'alert-error';
+            alertBox.style.display = 'block';
+            setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
+        }
+
+        function addToLog(nama, arrayId) {
+            const formatTiket = arrayId.map(id => `<span class="ticket-id">${id}</span>`).join(' ');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${nama}</strong></td>
+                <td style="line-height: 1.5;">${formatTiket}</td>
+                <td><span style="color: #2e7d32; font-weight: bold;">${arrayId.length}</span></td>
+            `;
+            logTable.insertBefore(tr, logTable.firstChild);
+        }
+    </script>
+</body>
+</html>
