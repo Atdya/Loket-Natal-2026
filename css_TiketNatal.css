@@ -1,0 +1,125 @@
+/* Reset & Base Styles */
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+body { background-color: #f4f7f6; color: #333; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Header */
+header { background-color: #1a1a1a; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 10; }
+header h1 { font-size: 1.2rem; font-weight: 600; }
+.status-badge { background-color: #2e7d32; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
+
+/* Container Layout (Grid 2 Kolom) */
+.container { display: grid; grid-template-columns: 380px 1fr; gap: 20px; padding: 20px; flex: 1; overflow: hidden; }
+
+/* =======================================
+    PANEL KIRI (Interaksi: Input & Log)
+    ======================================= */
+.left-panel { display: flex; flex-direction: column; gap: 20px; height: 100%; overflow: hidden; }
+
+.box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+.box h2 { margin-bottom: 20px; color: #1a1a1a; font-size: 1.1rem; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
+
+/* Form Styling */
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #555; font-size: 0.85rem; }
+
+/* Grid untuk 6 Pilihan Section */
+.section-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.section-selector input[type="radio"] { display: none; }
+.section-selector label {
+    display: block; padding: 8px; text-align: center; background: #f0f2f5; 
+    border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; 
+    font-weight: bold; font-size: 0.9rem; transition: all 0.2s; color: #555;
+}
+.section-selector input[type="radio"]:checked + label {
+    background: #ffebee; border-color: #d32f2f; color: #d32f2f;
+}
+
+.form-group input[type="text"] { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; }
+.form-group input[type="text"]:focus { outline: none; border-color: #d32f2f; }
+button.btn-submit { background-color: #d32f2f; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; width: 100%; margin-top: 5px; }
+button.btn-submit:hover { background-color: #b71c1c; }
+
+#alert-box { margin-top: 15px; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; display: none; text-align: center; }
+.alert-success { background-color: #e8f5e9; color: #2e7d32; }
+.alert-error { background-color: #ffebee; color: #c62828; }
+
+/* Log Table */
+.log-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding-bottom: 10px; }
+.table-container { overflow-y: auto; flex: 1; }
+table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+th, td { padding: 10px; border-bottom: 1px solid #f0f0f0; }
+th { color: #888; background: #fafafa; position: sticky; top: 0; }
+.ticket-id { background: #f0f2f5; padding: 3px 6px; border-radius: 4px; font-family: monospace; color: #d32f2f; font-weight: bold; }
+
+/* =======================================
+    PANEL KANAN (Monitoring: Kuota & Denah Full)
+    ======================================= */
+.right-panel { display: flex; flex-direction: column; gap: 15px; height: 100%; overflow: hidden; }
+
+/* Grid 6 Widget Kuota (2 Baris x 3 Kolom) */
+.quota-widget { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.quota-card { background: white; padding: 12px 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; border: 2px solid transparent; }
+.quota-title { color: #888; font-weight: bold; text-transform: uppercase; font-size: 0.75rem; margin-bottom: 4px; }
+.quota-number { font-size: 1.5rem; font-weight: bold; color: #1a1a1a; }
+
+.quota-card.habis { background-color: #ffebee; border-color: #ef5350; }
+.quota-card.habis .quota-number, .quota-card.habis .quota-title { color: #c62828; }
+
+/* Visual Denah Full */
+.denah-section { flex: 1; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
+.denah-section h2 { margin-bottom: 10px; color: #1a1a1a; font-size: 1.1rem; text-align: center; }
+
+.denah-wrapper {
+    display: grid;
+    grid-template-columns: 1.5fr 2fr 1.2fr 2fr 1.5fr; 
+    grid-template-rows: auto auto auto;
+    gap: 12px;
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.blok { border-radius: 8px; padding: 12px; display: flex; flex-direction: column; align-items: center; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); }
+.blok-title { color: white; margin-bottom: 8px; font-size: 0.85rem; font-weight: bold; letter-spacing: 1px; opacity: 0.9; }
+
+/* Warna Sesuai Legend */
+.sec-f { background-color: #9C27B0; grid-column: 1; grid-row: 1; } 
+.sec-a { background-color: #b71c1c; grid-column: 2; grid-row: 1 / 3; } 
+.sec-b { background-color: #0D47A1; grid-column: 4; grid-row: 1 / 3; } 
+.sec-c { background-color: #1B5E20; grid-column: 5; grid-row: 1; } 
+
+.sec-e { background-color: #F06292; grid-column: 2; grid-row: 3; } 
+.foh { background-color: #263238; grid-column: 3; grid-row: 3; justify-content: center; font-size: 1.2rem; font-weight: bold; color: white; letter-spacing: 2px; } 
+.sec-d1 { background-color: #E65100; grid-column: 4; grid-row: 3; } 
+.sec-d2 { background-color: #E65100; grid-column: 5; grid-row: 3; } 
+
+.tangga { background-color: #eceff1; color: #555; justify-content: center; border: 2px dashed #cfd8dc; min-height: 40px; font-weight: bold; font-size: 0.9rem; }
+.tangga-kiri { grid-column: 1; grid-row: 2; }
+.tangga-kanan { grid-column: 5; grid-row: 2; }
+.toilet-area { grid-column: 1; grid-row: 3; display: flex; gap: 5px; }
+.toilet { background-color: #eceff1; color: #555; flex: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; text-align: center; border: 1px solid #cfd8dc; }
+
+/* Grid Kursi Responsif */
+.seat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(22px, 1fr));
+    gap: 4px;
+    width: 100%;
+}
+
+.seat {
+    padding: 4px 0;
+    border-radius: 3px;
+    font-size: 0.65rem;
+    text-align: center;
+    font-weight: bold;
+    color: white;
+    transition: all 0.2s ease;
+}
+
+.kosong { background-color: rgba(255, 255, 255, 0.25); border: 1px solid rgba(255, 255, 255, 0.5); }
+.terisi { background-color: #121212; color: #666; box-shadow: inset 0 2px 4px rgba(0,0,0,0.8); }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
