@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Loket & Full Seating Map</title>
+    <title>LOKET NATAL GBI BEKASI PLAZA 2026</title>
     <link rel="stylesheet" href="css_TiketNatal.css">
 </head>
 <body>
 
     <header>
-        <h1>🎫 Dashboard Loket & Full Seating Map</h1>
-        <div class="status-badge">🟢 Sistem Aktif</div>
+        <h1>🎫 LOKET NATAL GBI BEKASI PLAZA 2026</h1>
+        <div class="status-badge">🟢 Sistem Terhubung ke Spreadsheet</div>
     </header>
 
     <div class="container">
@@ -39,7 +39,7 @@
                         <label>ID Tiket Fisik (Sesuai Batas Kursi)</label>
                         <input type="text" id="idTiket" placeholder="Contoh: A1, A2 atau C15" required autocomplete="off" style="text-transform: uppercase;">
                     </div>
-                    <button type="submit" class="btn-submit">Catat & Validasi Tiket</button>
+                    <button type="submit" class="btn-submit">Catat & Sinkronisasi Tiket</button>
                 </form>
                 <div id="alert-box"></div>
             </div>
@@ -50,9 +50,10 @@
                     <table>
                         <thead>
                             <tr>
-                                <th width="40%">Nama</th>
-                                <th width="45%">Kode Tiket</th>
-                                <th width="15%">Qty</th>
+                                <th width="35%">Nama</th>
+                                <th width="40%">Kode Tiket</th>
+                                <th width="10%">Qty</th>
+                                <th width="15%">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="logTableBody"></tbody>
@@ -64,17 +65,26 @@
 
         <div class="right-panel">
             
-            <div class="quota-widget">
-                <div class="quota-card" id="cardA"><div class="quota-title">Sisa Sec A</div><div class="quota-number" id="sisaA">40</div></div>
-                <div class="quota-card" id="cardB"><div class="quota-title">Sisa Sec B</div><div class="quota-number" id="sisaB">40</div></div>
-                <div class="quota-card" id="cardC"><div class="quota-title">Sisa Sec C</div><div class="quota-number" id="sisaC">30</div></div>
-                <div class="quota-card" id="cardD"><div class="quota-title">Sisa Sec D</div><div class="quota-number" id="sisaD">30</div></div>
-                <div class="quota-card" id="cardE"><div class="quota-title">Sisa Sec E</div><div class="quota-number" id="sisaE">30</div></div>
-                <div class="quota-card" id="cardF"><div class="quota-title">Sisa Sec F</div><div class="quota-number" id="sisaF">30</div></div>
+            <div class="right-top-bar">
+                
+                <div class="quota-widget">
+                    <div class="quota-card" id="cardA"><div class="quota-title">Sisa Sec A</div><div class="quota-number" id="sisaA">40</div></div>
+                    <div class="quota-card" id="cardB"><div class="quota-title">Sisa Sec B</div><div class="quota-number" id="sisaB">40</div></div>
+                    <div class="quota-card" id="cardC"><div class="quota-title">Sisa Sec C</div><div class="quota-number" id="sisaC">30</div></div>
+                    <div class="quota-card" id="cardD"><div class="quota-title">Sisa Sec D</div><div class="quota-number" id="sisaD">30</div></div>
+                    <div class="quota-card" id="cardE"><div class="quota-title">Sisa Sec E</div><div class="quota-number" id="sisaE">30</div></div>
+                    <div class="quota-card" id="cardF"><div class="quota-title">Sisa Sec F</div><div class="quota-number" id="sisaF">30</div></div>
+                </div>
+
+                <div class="action-group">
+                    <button id="btnExport" class="btn-export">📥 Unduh<br>Rekap Laporan</button>
+                    <button id="btnReset" class="btn-reset">⚠️ Reset Data</button>
+                </div>
+
             </div>
 
             <div class="denah-section">
-                <h2>Visualisasi Area Seating Lt. 2</h2>
+                <h2>HALL GBI BEKASI PLAZA LT.2</h2>
                 <div class="denah-wrapper">
                     
                     <div class="blok sec-f"><span class="blok-title">SEC F</span><div class="seat-grid" id="grid-f"></div></div>
@@ -101,26 +111,52 @@
     </div>
 
     <script>
-        // LIMIT PER SECTION
-        const MAX_LIMITS = {
-            'A': 40,
-            'B': 40,
-            'C': 30,
-            'D': 30,
-            'E': 30,
-            'F': 30
-        };
+        // =======================================
+        // 1. KONFIGURASI AWAL & CLOUD URL
+        // =======================================
+        const MAX_LIMITS = { 'A': 40, 'B': 40, 'C': 30, 'D': 30, 'E': 30, 'F': 30 };
         
-        let kuota = { ...MAX_LIMITS }; 
-        let tiketTerpakai = []; 
+        // ⚠️ PENTING: Ganti string di bawah ini dengan URL Web App dari Google Apps Script lu
+        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbw6NKiYVkdfNLMlH5UAl2WQNC9E_qZbMzVR8CnS6ym-7lWoXCNpzGbYXAFbFPGZJpj12A/exec'; 
+
+        // =======================================
+        // 2. MEMORI LOKAL (SABUK PENGAMAN DATA)
+        // =======================================
+        let kuota = JSON.parse(localStorage.getItem('loketKuota')) || { ...MAX_LIMITS }; 
+        let tiketTerpakai = JSON.parse(localStorage.getItem('loketTiket')) || []; 
+        let riwayatPendaftaran = JSON.parse(localStorage.getItem('loketRiwayat')) || [];
 
         const form = document.getElementById('loketForm');
         const inputNama = document.getElementById('namaJemaat');
         const inputId = document.getElementById('idTiket');
         const alertBox = document.getElementById('alert-box');
         const logTable = document.getElementById('logTableBody');
+        const btnExport = document.getElementById('btnExport');
+        const btnReset = document.getElementById('btnReset');
 
-        // KOTAK KURSI
+        // Fungsi Simpan ke LocalStorage
+        function simpanKeMemory() {
+            localStorage.setItem('loketKuota', JSON.stringify(kuota));
+            localStorage.setItem('loketTiket', JSON.stringify(tiketTerpakai));
+            localStorage.setItem('loketRiwayat', JSON.stringify(riwayatPendaftaran));
+        }
+
+        // =======================================
+        // 3. FUNGSI SINKRONISASI CLOUD (API)
+        // =======================================
+        function kirimKeSheets(payload) {
+            fetch(GOOGLE_SHEET_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => console.log('Sukses sinkron ke Sheets!'))
+            .catch(err => console.error('Gagal sinkron ke Sheets:', err));
+        }
+
+        // =======================================
+        // 4. GENERATE KURSI & PEMULIHAN TAMPILAN
+        // =======================================
         function generateInitialSeats() {
             const sections = [
                 { id: 'grid-a', prefix: 'A', limit: MAX_LIMITS['A'], start: 1 },
@@ -135,7 +171,6 @@
             sections.forEach(sec => {
                 const container = document.getElementById(sec.id);
                 const end = sec.start + sec.limit - 1;
-                
                 for (let i = sec.start; i <= end; i++) {
                     const seatDiv = document.createElement('div');
                     seatDiv.id = `seat-${sec.prefix}${i}`;
@@ -144,12 +179,91 @@
                     container.appendChild(seatDiv);
                 }
             });
+
+            // Pemulihan Tampilan dari Memori
+            tiketTerpakai.forEach(kode => {
+                const seat = document.getElementById(`seat-${kode}`);
+                if (seat) seat.classList.replace('kosong', 'terisi');
+            });
+            Object.keys(kuota).forEach(sec => updateVisualKuota(sec, kuota[sec]));
         }
-        generateInitialSeats();
 
-        // LOGIKA FORM LOKET
+        // =======================================
+        // 5. MANAJEMEN TABEL RIWAYAT & BATAL
+        // =======================================
+        function renderTabelRiwayat() {
+            logTable.innerHTML = ''; 
+            riwayatPendaftaran.forEach(data => addToLogUI(data));
+        }
+
+        function addToLogUI(data) {
+            const formatTiket = data.tiket.map(id => `<span class="ticket-id">${id}</span>`).join(' ');
+            const tr = document.createElement('tr');
+            
+            tr.innerHTML = `
+                <td><strong>${data.nama}</strong></td>
+                <td style="line-height: 1.5;">${formatTiket}</td>
+                <td><span style="color: #2e7d32; font-weight: bold;">${data.qty}</span></td>
+                <td><button class="btn-delete" title="Batalkan Transaksi">Batal</button></td>
+            `;
+
+            // Efek Hover Kursi Interaktif
+            tr.addEventListener('mouseenter', () => {
+                data.tiket.forEach(kode => {
+                    const seatElement = document.getElementById(`seat-${kode}`);
+                    if (seatElement) seatElement.classList.add('highlight');
+                });
+            });
+            tr.addEventListener('mouseleave', () => {
+                data.tiket.forEach(kode => {
+                    const seatElement = document.getElementById(`seat-${kode}`);
+                    if (seatElement) seatElement.classList.remove('highlight');
+                });
+            });
+
+            // Logika Pembatalan (Undo)
+            const btnDelete = tr.querySelector('.btn-delete');
+            btnDelete.addEventListener('click', () => {
+                if(confirm(`Yakin ingin membatalkan pendaftaran ${data.qty} tiket untuk ${data.nama}?`)) {
+                    
+                    // Kembalikan Kuota
+                    kuota[data.section] += data.qty;
+                    updateVisualKuota(data.section, kuota[data.section]);
+                    
+                    // Bersihkan kursi & update memori
+                    data.tiket.forEach(kode => {
+                        const index = tiketTerpakai.indexOf(kode);
+                        if (index > -1) tiketTerpakai.splice(index, 1);
+                        
+                        const seatElement = document.getElementById(`seat-${kode}`);
+                        if (seatElement) {
+                            seatElement.classList.remove('highlight');
+                            seatElement.classList.replace('terisi', 'kosong');
+                        }
+                    });
+
+                   // Sinkronisasi Pembatalan ke Google Sheets
+                    kirimKeSheets({
+                        action: "BATAL",
+                        nama: data.nama,
+                        tiket: data.tiket.join(', ')
+                    });
+
+                    riwayatPendaftaran = riwayatPendaftaran.filter(item => item.id !== data.id);
+                    simpanKeMemory();
+                    tr.remove();
+                    showAlert(`Pendaftaran atas nama ${data.nama} dibatalkan.`, 'success');
+                    inputNama.focus();
+                }
+            });
+
+            logTable.appendChild(tr);
+        }
+
+        // =======================================
+        // 6. PROSES SUBMIT TIKET
+        // =======================================
         inputNama.focus();
-
         form.addEventListener('submit', function(e) {
             e.preventDefault();
 
@@ -157,66 +271,128 @@
             const rawId = inputId.value.trim().toUpperCase();
             const sectionTerpilih = document.querySelector('input[name="pilihanSection"]:checked').value;
             const batasMax = MAX_LIMITS[sectionTerpilih];
-
             const arrayId = rawId.split(',').map(id => id.trim()).filter(id => id !== '');
             const jumlahPesan = arrayId.length;
 
             if (jumlahPesan === 0) return;
-
-            // Validasi Kuota
             if (jumlahPesan > kuota[sectionTerpilih]) {
-                showAlert(`Gagal! Sisa kuota Section ${sectionTerpilih} hanya ${kuota[sectionTerpilih]}.`, 'error');
-                return;
+                showAlert(`Gagal! Sisa kuota Section ${sectionTerpilih} hanya ${kuota[sectionTerpilih]}.`, 'error'); return;
             }
 
-            // Validasi Ketat Tiap Kode
             for (let i = 0; i < arrayId.length; i++) {
                 const kode = arrayId[i];
-                const sectionKode = kode.charAt(0);
-                const nomorKursi = parseInt(kode.substring(1));
-                
-                if (sectionKode !== sectionTerpilih) {
-                    showAlert(`Gagal! Kode "${kode}" salah. Anda sedang memilih input untuk Section ${sectionTerpilih}.`, 'error');
-                    return;
+                if (kode.charAt(0) !== sectionTerpilih) {
+                    showAlert(`Gagal! Kode "${kode}" salah section.`, 'error'); return;
                 }
-                
-                if (isNaN(nomorKursi) || nomorKursi < 1 || nomorKursi > batasMax) {
-                    showAlert(`Gagal! Nomor kursi "${kode}" tidak valid. Maksimal kursi untuk Section ${sectionTerpilih} adalah ${batasMax}.`, 'error');
-                    return;
+                if (isNaN(parseInt(kode.substring(1))) || parseInt(kode.substring(1)) < 1 || parseInt(kode.substring(1)) > batasMax) {
+                    showAlert(`Gagal! Nomor kursi "${kode}" tidak valid. Maksimal adalah ${batasMax}.`, 'error'); return;
                 }
-                
                 if (tiketTerpakai.includes(kode)) {
-                    showAlert(`Gagal! Tiket "${kode}" sudah pernah dicatat.`, 'error');
-                    return;
+                    showAlert(`Gagal! Tiket "${kode}" sudah pernah dicatat.`, 'error'); return;
                 }
             }
 
-            // EKSEKUSI
+            // Potong Kuota & Warnai Kursi
             kuota[sectionTerpilih] -= jumlahPesan;
             updateVisualKuota(sectionTerpilih, kuota[sectionTerpilih]);
 
             arrayId.forEach(kode => {
                 tiketTerpakai.push(kode);
                 const seatElement = document.getElementById(`seat-${kode}`);
-                if(seatElement) {
-                    seatElement.classList.replace('kosong', 'terisi');
-                }
+                if(seatElement) seatElement.classList.replace('kosong', 'terisi');
             });
 
-            addToLog(nama, arrayId);
+            // Rekam Data & Auto-Save
+            const newData = {
+                id: Date.now(),
+                waktu: new Date().toLocaleString('id-ID'),
+                nama: nama,
+                section: sectionTerpilih,
+                tiket: arrayId,
+                qty: jumlahPesan
+            };
+            riwayatPendaftaran.unshift(newData);
+            simpanKeMemory();
+            renderTabelRiwayat();
+
+            // Sinkronisasi Penambahan ke Google Sheets
+            kirimKeSheets({
+                action: "INPUT",
+                waktu: newData.waktu,
+                nama: newData.nama,
+                section: newData.section,
+                qty: newData.qty,
+                tiket: arrayId.join(', ')
+            });
 
             showAlert(`Berhasil mencatat ${jumlahPesan} tiket untuk ${nama}.`, 'success');
-            inputNama.value = '';
-            inputId.value = '';
-            inputNama.focus();
+            inputNama.value = ''; inputId.value = ''; inputNama.focus();
         });
 
-        // FUNGSI UTILITAS
+        // =======================================
+        // 7. TOMBOL EXPORT KE CSV
+        // =======================================
+        btnExport.addEventListener('click', () => {
+            if (riwayatPendaftaran.length === 0) {
+                showAlert('Data masih kosong!', 'error'); return;
+            }
+            let csvContent = "Waktu Pendaftaran,Nama Perwakilan,Section,Jumlah Tiket,Daftar Kursi\n";
+            riwayatPendaftaran.forEach(row => {
+                const daftarKursi = `"${row.tiket.join(', ')}"`; 
+                csvContent += `${row.waktu},${row.nama},${row.section},${row.qty},${daftarKursi}\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Rekap_Loket_Natal_${new Date().getTime()}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showAlert('Laporan CSV berhasil diunduh.', 'success');
+        });
+
+        // =======================================
+        // 8. TOMBOL RESET DATA (FACTORY RESET)
+        // =======================================
+        btnReset.addEventListener('click', () => {
+            const konfirmasi = confirm("PERINGATAN BAHAYA!\n\nApakah Anda yakin ingin MENGHAPUS SEMUA DATA LOKAL & CLOUD?\nSistem akan kembali ke nol.");
+            if (konfirmasi) {
+                localStorage.removeItem('loketKuota');
+                localStorage.removeItem('loketTiket');
+                localStorage.removeItem('loketRiwayat');
+
+                kuota = { ...MAX_LIMITS };
+                tiketTerpakai = [];
+                riwayatPendaftaran = [];
+
+                renderTabelRiwayat();
+                Object.keys(kuota).forEach(sec => updateVisualKuota(sec, kuota[sec]));
+                document.querySelectorAll('.seat').forEach(seat => {
+                    seat.classList.remove('terisi', 'highlight');
+                    if (!seat.classList.contains('kosong')) seat.classList.add('kosong');
+                });
+
+                // Sinkronisasi Reset ke Google Sheets
+                kirimKeSheets({ action: "RESET" });
+
+                showAlert('Sistem berhasil di-reset sepenuhnya.', 'success');
+                inputNama.focus();
+            }
+        });
+
+        // =======================================
+        // 9. FUNGSI UTILITAS
+        // =======================================
         function updateVisualKuota(section, sisa) {
             const elSisa = document.getElementById(`sisa${section}`);
             const card = document.getElementById(`card${section}`);
-            elSisa.innerText = sisa;
-            if (sisa === 0) card.classList.add('habis');
+            if (elSisa) elSisa.innerText = sisa;
+            if (card) {
+                if (sisa === 0) card.classList.add('habis');
+                else card.classList.remove('habis');
+            }
         }
 
         function showAlert(pesan, tipe) {
@@ -226,16 +402,9 @@
             setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
         }
 
-        function addToLog(nama, arrayId) {
-            const formatTiket = arrayId.map(id => `<span class="ticket-id">${id}</span>`).join(' ');
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${nama}</strong></td>
-                <td style="line-height: 1.5;">${formatTiket}</td>
-                <td><span style="color: #2e7d32; font-weight: bold;">${arrayId.length}</span></td>
-            `;
-            logTable.insertBefore(tr, logTable.firstChild);
-        }
+        // INIT: Jalankan saat web dibuka
+        generateInitialSeats();
+        renderTabelRiwayat();
     </script>
 </body>
 </html>
